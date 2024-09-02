@@ -3,6 +3,10 @@ package study.data_jpa.repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.data_jpa.dto.MemberDto;
@@ -160,5 +164,35 @@ class MemberRepositoryTest {
 
         Optional<Member> findMember = memberRepository.findOptionalByUsername("adfasdf");  // 데이터가 있을 수도 있고 없을 수도 있다면 Optional<>을 쓸 것!!
         System.out.println("findMember = " + findMember);  // findMember = Optional.empty
+    }
+
+    @Test
+    public void paging() {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10;
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));// 0페이지에서 3개 가져와라. sort의 방향은 DESC(정렬 조건은 선택)
+
+        // when
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+        //Slice<Member> page = memberRepository.findByAge(age, pageRequest);  // Slice를 적용 - 실무에서 많이 사용함
+        //List<Member> page = memberRepository.findByAge(age, pageRequest);  // List 적용
+
+        Page<MemberDto> toMap = page.map(member -> new MemberDto(member.getId(), member.getUsername(), null));  // Page를 유지하면서 Dto로 변환 가능
+
+        // then
+        List<Member> content = page.getContent();  // page 내부에 있는 3개(pageSize)를 꺼내옴
+
+        assertThat(content.size()).isEqualTo(3);  // 페이지 사이즈
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getNumber()).isEqualTo(0);  // 페이지 번호
+        assertThat(page.getTotalPages()).isEqualTo(2);// 총 페이지 개수(알아서 계산됨) - 페이지 사이즈는 3인데 member가 5명이니깐 2가 나와야됨
+        assertThat(page.isFirst()).isTrue();  // 첫 페이지인가??
+        assertThat(page.hasNext()).isTrue();  // 다음 페이지가 있나?? (게시판의 다음페이지, 이전페이지 같은데서 사용)
     }
 }
