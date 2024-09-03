@@ -1,5 +1,7 @@
 package study.data_jpa.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +29,7 @@ class MemberRepositoryTest {
 
     @Autowired MemberRepository memberRepository;
     @Autowired TeamRepository teamRepository;
+    @PersistenceContext EntityManager em;
 
     @Test
     public void testMember() {
@@ -194,5 +197,26 @@ class MemberRepositoryTest {
         assertThat(page.getTotalPages()).isEqualTo(2);// 총 페이지 개수(알아서 계산됨) - 페이지 사이즈는 3인데 member가 5명이니깐 2가 나와야됨
         assertThat(page.isFirst()).isTrue();  // 첫 페이지인가??
         assertThat(page.hasNext()).isTrue();  // 다음 페이지가 있나?? (게시판의 다음페이지, 이전페이지 같은데서 사용)
+    }
+
+    @Test
+    public void bulkUpdate() {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+        memberRepository.save(new Member("member3", 20));
+        memberRepository.save(new Member("member4", 21));
+        memberRepository.save(new Member("member5", 50));
+
+        // when
+        int resultCount = memberRepository.bulkAgePlus(20);  // 20살 이상인 것들은 +1해라
+        //em.clear();
+
+        List<Member> result = memberRepository.findByUsername("member5");
+        Member member5 = result.get(0);
+        System.out.println("member5 = " + member5);
+
+        // then
+        assertThat(resultCount).isEqualTo(3);
     }
 }

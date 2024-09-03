@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import study.data_jpa.dto.MemberDto;
@@ -40,4 +41,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Page<Member> findByAge(int age, Pageable pageable);  // 페이징
 
     //Slice<Member> findByAge(int age, Pageable pageable);  // 페이징 슬라이스
+
+    //@Modifying  // 이게 없으면 result list나 single result 같은걸 호출한다.
+    @Modifying(clearAutomatically = true)  // em.clear()을 자동으로 해줌
+    @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+    int bulkAgePlus(@Param("age") int age);
 }
